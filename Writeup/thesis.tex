@@ -1,0 +1,226 @@
+% AER-Article.tex for AEA last revised 22 June 2011
+\documentclass[AER]{AEA}
+
+\usepackage{mathtools}
+
+% Note: you may use either harvard or natbib (but not both) to provide a wider
+% variety of citation commands than latex supports natively. See below.
+
+% Uncomment the next line to use the natbib package with bibtex 
+%\usepackage{natbib}
+
+% Uncomment the next line to use the harvard package with bibtex
+\usepackage[abbr]{harvard}
+
+% This command determines the leading (vertical space between lines) in draft mode
+% with 1.5 corresponding to "double" spacing.
+\draftSpacing{1.5}
+
+\begin{document}
+
+\title{Forecasting House Price Index Revisions}
+\shortTitle{}
+\author{Joseph M. Silverstein\thanks{Department of Economics, University of Pennsylvania, 160 McNeil Building, 3718 Locust Walk, University of Pennsylvania, Philadelphia, PA 19104, jsi@sas.upenn.edu. The author would like to thank Will Doerner at the FHFA for providing all of the data.}}
+\date{\today}
+\pubMonth{November}
+\pubYear{2015}
+\Keywords{}
+
+\begin{abstract}
+By the nature of their construction, house price indexes tend to be revised substantially. This greatly impacts fiscal and monetary policy recommendations as well as eligibility for government programs. Elul et. al. (2014) claim that revisions to the CoreLogic house price index are predictable using previous house price index releases. In this paper we present an improved model that can forecast house price index revisions. This model is likely to work with other house price indexes as well, since all repeat-sales indexes are constructed using a similar methodology.
+\end{abstract}
+
+
+\maketitle
+
+Most housing price indexes (HPI's) are constructed using the repeat-sales methodology, which controls for heterogeneity in houses by pairing home sales  across time. A sale is only entered into the index when it can be paired with a previous sale of that same house, resulting in a constant-quality index.  This methodology is discussed in more detail in Silverstein (2014), but the important thing to understand is that this causes the entire time series of HPI to be revised, with the most recent values getting revised more than the values further in the past \cite{researchRap}. In particular, the smaller the sample size, the larger the revisions, meaning that HPI's that measure smaller levels of geographic aggregation (zip codes, small states, etc.) can be expected to be revised much more than HPI's that measure housing prices in larger regions (census regions, countries). 
+
+Elul et. al. (2014) described the magnitude and impact of revisions. In particular, they explained how relatively small HPI revisions can impact fiscal and monetary policy decisions and change the number of people eligible for government programs that condition on estimated loan-to-value ratios. They also claimed that revisions are predictable, but did not propose a predictive model due to the lack of data and the dangers of overfitting \cite{HPIPaper}.
+
+There are currently no tradeable financial contracts that condition on HPI revisions, so it is reasonable for anyone to agree that HPI revisions may be predictable. In this paper, we improve upon the Elul et. al. (2014) model to create a model that can potentially forecast revisions. If HPI revisions can be reliably forecasted, this result substantially increases the reliability of HPI's for conducting policy.
+
+\section{Data}
+
+Elul et. al. (2014) used the CoreLogic state-level HPI, since this is what is used by policymakers at the Federal Reserve. Unfortunately, this is proprietary data that cannot be brought outside the Federal Reserve. We instead use the FHFA HPI, which is constructed using the same methodology as CoreLogic but only covers larger levels of aggregation such as states and regions. The only major difference between revisions at different levels of aggregation is the magnitude, so we decided to simplify things by only analyzing the census region releases of the FHFA HPI even though revisions at this level of aggregation are not very large. If policymakers decide to use our model, then they can apply it to any HPI at any level of aggregation.
+
+\section{Notation}
+
+Since both HPI's and HPI releases are indexed by time, our discussion can get confusing without the introduction of clear notation. Throughout the rest of this paper, we use notation largely similar to Elul et. al. (2014). Let $p_{t,i}^j$ denote the HPI at date $t$, for region $i$, as of release date $j$. Then the first (percentage) revision to the date-$t$ index is $p_{t,i}^{t+1}/p_{t,i}^t-1$. The initial release of the one-month growth rate in the index is then $p_{t+1,i}^{t+1}/p_{t,i}^{t+1}-1$. 
+
+\section{Elul et. al. (2014) Model}
+
+As was shown in Elul et. al. (2014), past revisions and growth rates are correlated with future revisions. This led them to believe that revisions can be forecasted using lagged revisions and growth rates. Specifically, they proposed the following models for regions $i \in \lbrace ENC,ESC,MA,MT,NE,PAC,SA,WNC,WSC \rbrace$:
+
+\[
+r_{t,i} = \alpha_{t,i} + \sum_{j=1}^4 (r_{t-j,i} + a_{t,i}^j) + \epsilon_{t,i}
+\]
+
+where the first revision to the region $i$ HPI released in period $t$ is 
+
+\[
+r_{t,i} = \frac{p_{t,i}^{t+1}}{p_{t,i}^t} - 1
+\]
+
+and the percentage change in the HPI for region $i$ as released in period $t+1$ from period $t$ to period $t+1$ is
+
+\[
+a_{t,i}^j = \frac{p_{t-j+1,i}^{t}}{p_{t-j,i}^{t}} - 1
+\].
+
+That is, they attempt to predict the next revision in the index using the last four first revisions and the last four one-period HPI growth rates (fixing the time series used). The reason they decide to do this is that it uses a significant amount of the available information to making the prediction. They only use four lags so as to hopefully avoiding too much overfitting and generate good out-of-sample forecasts, since they saw that most of the correlation drops-off after the fourth lag.
+
+\section{Our Data}
+
+In this paper, we use quarterly releases of FHFA regional HPI data, from the first quarter of 2008 up to the second quarter of 2015. Constructing the four variables as above, we have $N=26$ observations that can be used in estimation. There are more observations available in the full sample, but we do not have access to it at the moment. Having access to a larger sample is likely to significantly improve the forecasting ability of the model soon to be introduced.
+
+\section{Testing the Elul et. al. Model}
+
+We test whether the model of Elul et. al. (2014) forecasts the FHFA revisions well by performing leave-one-out-cross-validation (LOOCV) using the mean absolute error loss function, and we compare the mean absolute loss with a naive forecast of a 0\% revision. That is, for each of the $N$ observations, we estimate the model with that observation removed. We then use the independent variable data associated with the omitted observation to forecast the dependent variable (revision), and we then compute the absolute value of the prediction error. We do this $N$ times and take the mean of the $N$ absolute errors. 
+
+The absolute error of the naive forecast is the mean observed absolute revision size (next release divided by current release) across the sample. In the table below, we compare this with the mean absolute forecast error for each of the $9$ census regions:
+
+\begin{table}
+\caption{Elul et. al. Model: Naive Forecast Error vs. Model Forecast Error.}
+
+\begin{tabular}{lll}
+Census Region & Naive Absolute Forecast Error & Model Mean Absolute Forecast Error \\ 
+East North Central & 0.00328 & 1.063 \\ 
+East South Central & 0.00287 & 0.425 \\
+Middle Atlantic & 0.00228 & 0.291 \\
+Mountain & 0.00378 & 0.720 \\
+New England & 0.00261 & 0.135 \\
+Pacific & 0.00314 & 0.268 \\
+South Atlantic & 0.00344 & 0.620 \\
+West North Central & 0.00268 & 0.579 \\
+West South Central & 0.00188 & 0.489
+\end{tabular}
+\end{table}
+
+For all of the regions, the naive forecast is much better than the forecast from the model, so this model clearly cannot predict revisions in the FHFA data. It would be better to just assume revisions will not occur.
+
+\section{Improved Model}
+
+\subsection{Data Exploration}
+
+To forecast revisions, we will have to either use more information or use a more parsimonious model to avoid the overfitting discussed previously. Since we are dealing with a time series, one might think that the more recent values are better predictors and we should only use one or two lags in the model. However, after looking at the autocorrelation diagram and running the Ljung-Box test on the time series of first revisions, it turns out that there is almost certainly no autocorrelation. The same is true for the "time series" of one-period appreciation, which makes sense because it should not be so easy to forecast the housing market using lagged data. 
+
+Since the observations are independent across time, we can think of all of this data as being equivalent to cross-sectional data. Since time does not matter, it becomes a much more ad hoc decision to use a parsimonious model that restricts to using only the most recent lags. Since we have no good theory to back up our variable selection procedure, we will likely need to include more variables if we are to improve the model.
+
+One way to get more information is to use more lags. However, each additional lag of HPI revisions reduces the sample size by one observation. Since the sample size is small to begin with, it is probably not worth it to decrease the sample size much more to add more lags. On the other hand, for a given observation, we use a fixed time series to calculate lagged percentage changes in the index, so adding more of these does not reduce the sample size. Nonetheless, it seems absurd to use aggregate house price appreciation from years in the past to forecast revisions to the HPI released today. Because of this, we opt to continue using only four lags of percentage index changes.
+
+Another possibility is to take advantage of the fact that revisions and price changes tend to be correlated across geographic regions. Because of this, it is likely that there is predictive information contained in the other regions' revisions and price changes as well that we could be using. For this reason, we think it is a good idea to simultaneously use data for all of the available regions to predict the revisions for each particular region.
+
+Unfortunately, we only have 26 observations either way, and we already have 8 regressors. We are already obviously overfitting the data. In particular, if we include more than 26 regressors, the least-squares problem will not be well-posed and the OLS coefficient estimates will not be unique.
+
+\subsection{High-Dimensional Data}
+
+For those unfamiliar with the recent statistical and econometric literature, this seems like a bizarre problem to have. Fortunately for us, however, a huge literature exists on how to deal with this. Specifically, datasets with a large number of variables relative to the sample size are called "high-dimensional." Belloni et. al. (2014) discuss how to handle high-dimensional data, focusing on causal inference \cite{JEPHighDim}. In our case, we are more interested in predictive accuracy, which means we can use the same methods without worrying about whether the coefficient estimates can be interpreted as  causal. 
+
+The main idea behind most high-dimensional estimators is to slightly perturb the least-squares problem so as to make it well-posed. This implies that the estimator will be slightly biased, but in return one can use much more data. This is definitely worth it when the number of variables is significantly larger than the number of observations. One of the better high-dimensional methods is the Least Absolute Shrinkage and Selection Operator (LASSO).\cite{LASSO,ESL} It introduces a penalty parameter $\lambda$ to introduce a size constraint on the coefficients, giving the program a unique solution for each value of $\lambda$. The penalty parameter $\lambda$ is chosen so as to minimize the cross-validation error.\footnote{Obviously, it is not possible to know with certainty that the chosen value of $\lambda$ minimizes the global cross-validation error. Instead, the CV error is minimized over a range and a graph of $\lambda$ vs. CV error is visually examined to make sure it looks like it achieves a clear minimum. } As developed in Tibshirani (1996) and described for practitioners in Hastie et. al. (2014), the LASSO estimator is
+
+\[
+\begin{aligned}
+\hat{\beta}^{lasso} \;\; = \quad
+& \underset{\beta}{\text{argmin}}
+& & \left( Y - X\beta \right)\left( Y - X\beta \right)' \\
+& \text{subject to}
+& & \sum_{i=1}^p |\beta_i| \leq \lambda
+\end{aligned}
+\]
+
+Zhou et. al. (2006) improved upon the LASSO estimator by proposing  the "Adaptive LASSO Estimator" \cite{adaptiveLASSO}. As explained in Diebold (2015), the adaptive LASSO has the desirable "Oracle Property." That is, the adaptive LASSO estimator is consistent within the space of linear models. An  explanation of this is as follows. Suppose a "true" data-generating-process (DGP) exists. Then as the number of observations tends to  infinity, the probability of selecting the best approximation to the true DGP approaches one \cite{dieboldForecasting}.
+
+The adaptive LASSO modifies the original LASSO to weight every parameter in the penalty function by $w_i=1/|\hat{\beta}_i^{lasso}|$. The weights are estimated beforehand using the non-adaptive LASSO estimator. The adaptive LASSO is presented below:
+%$
+%\begin{aligned}
+%\hat{\beta}^{ridge} \;\; = \quad
+%& \underset{\beta}{\text{argmin}} & \left( Y - X\beta \right)\left( Y - X\beta \right)' + \lambda \sum_{i=1}^p \beta_i^2
+%\end{aligned}
+%$ }
+
+\[
+\begin{aligned}
+\hat{\beta}^{adaptive} \;\; = \quad
+& \underset{\beta}{\text{argmin}}
+& & \left( Y - X\beta \right)\left( Y - X\beta \right)' \\
+& \text{subject to}
+& & \sum_{i=1}^p w_i|\beta_i| \leq \lambda
+\end{aligned}
+\]
+
+The advantage of the LASSO over other high-dimensional estimation procedures (ridge, principal-components regression, etc.) is that it effectively performs both variable selection and "shrinkage" at the same time. This makes it more flexible and thus more likely to produce accurate forecasts in our environment given that we have no good theory that tells us which regressors are most important.
+
+In the context of very high-dimensional data where the number of variables is much larger than the number of observations, a method called the Adaptive Elastic Net forecasts better \cite{adaptiveElasticNet}. The adaptive elastic net averages the ridge (squared) penalty term and the LASSO penalty in the following way:
+
+\[
+\begin{aligned}
+\hat{\beta}^{elastic} \;\; = \quad
+& \underset{\beta}{\text{argmin}}
+& & \left( Y - X\beta \right)\left( Y - X\beta \right)' \\
+& \text{subject to}
+& & \sum_{i=1}^p \left( \alpha |\beta_i| + \left(1 - \alpha\right) \beta_i^2 \right) \leq \lambda
+\end{aligned}
+\]
+
+For the model we are about to propose, cross-validation (adjusting both $\lambda$ and $\alpha$) reveals that the elastic net does not significantly improve predictive accuracy over the LASSO. Hence, we find the elastic net to be unnecessary and we conclude that the adaptive LASSO is the best estimator to use to predict HPI revisions using the model to be proposed.
+
+\subsection{Some Notes About Bayesian Methods}
+
+Note that so far in this paper, we have been doing only frequentist estimation when Bayesian estimation may be theoretically more appealing. There exist Bayesian versions of the LASSO and the elastic net \cite{BayesLasso,BayesElasticNet}. However, the statisticians that developed those methods note that simulation studies show that they behave comparably with frequentist methods in prediction accuracy. Thus, it seems unlikely that switching to a Bayesian version of the LASSO or elastic net will suddenly allow us to improve our forecasts of HPI revisions by very much.
+
+The major advantage of the Bayesian LASSO is that it allows us to calculate prediction standard errors. As it stands currently, there is no consensus on a statistically-valid method of calculating standard errors for frequentist LASSO predictions. However, this is not the case for the Bayesian LASSO  \cite{BayesLASSOSE}. Currently, it seems like overkill to do this when we are not even sure whether there is academic, government, or industrial demand for our forecasting model. If we decide that there is demand for a production-ready HPI revision forecasting model, we will probably proceed to implement the Bayesian version to be used in practice.
+
+Recent research has pointed-out that the use of cross-validation to evaluate model accuracy is suboptimal from a Bayesian perspective, since a posterior distribution that is formed based on a leave-one-out sample does not use all of the available data to form posterior model probabilities \cite{useOfHoldOut}. We do not see this as being much of a problem, since LOOCV minimizes this sub-optimality by holding-out only one observation in each round of estimation, and there are no better feasible alternatives. It is doubtful that if we evaluated our model's accuracy differently we would suddenly be able to forecast revisions. Furthermore, recent research has shown that there are good theoretical justifications for the use of cross-validation \cite{useOfHoldOut}. 
+
+\subsection{Model Including Regressors for All Regions}
+
+Adding in the regressors for all regions, we have the following models for $i \in \lbrace ENC,ESC,MA,MT,NE,PAC,SA,WNC,WSC \rbrace$:
+
+\[
+r_{t,i} = \alpha_{t,i} + \sum_{k \neq i} \sum_{j=1}^4 \left( r_{t-j,k} + a_{t,k}^j \right) + \epsilon_{t,i}
+\]
+
+\subsection{Model Validation}
+
+Below, we display the forecast error of the naive forecast of 0\% revisions vs. the forecast error based on the adaptive LASSO estimator for the model displayed in the previous section:
+
+\begin{table}
+\caption{New Model: Naive Forecast Error vs. Model Forecast Error.}
+
+\begin{tabular}{lll}
+Census Region & Naive Absolute Forecast Error & Model Mean Absolute Forecast Error \\ 
+East North Central & 0.00328 & 0.00235 \\ 
+East South Central & 0.00287 & 0.00290 \\
+Middle Atlantic & 0.00228 & 0.00197 \\
+Mountain & 0.00378 & 0.000451 \\
+New England & 0.00261 & 0.000598 \\
+Pacific & 0.00314 & 0.000432 \\
+South Atlantic & 0.00344 & 0.0000670 \\
+West North Central & 0.00268 & 0.00240 \\
+West South Central & 0.00188 & 0.00145
+\end{tabular}
+\end{table}
+
+Even when including this many more variables, the model cannot significantly outperform the naive forecast of 0\% revision for some of the census regions. Even if it could, it would likely be overfitted. However, it does appear that the model predicts very accurately for the Mountain, New England, Pacific, and South Atlantic census regions. Overall, it seems like the model either performs the same or substantially outperforms a guess of 0\% revisions, so there is some justification for its use.
+
+We also estimated the model using additional lagged percentage index changes, but did not get significantly different results. Even though the percentage  changes in the index are uncorrelated, we feel that changes that are very distant in the past are unlikely to help us improve our prediction out-of-sample. This discussion is pointless anyway, since it turns out that they do not improve our prediction in-sample either.
+
+\section{Economic Significance of Results}
+
+Since revisions in some regions appear to be predictable and others do not, it is a matter of opinion whether this model should be used to forecast HPI revisions. A good case could be made that one is likely to be able to achieve at least the accuracy of the naive forecast by using this model in practice. In this case, the reliability of HPI releases could be improved by running this forecast. They could be improved even further if the developers of the index can figure out why revisions can be forecasted and then correct the problem with the methodology.
+
+Note that the model estimated above used all available information that could be used without reducing the size of the sample. Thus, if one prefers not to trust this model, one would have to conclude that revisions are not predictable using past HPI releases. If this were the case, these results would substantially undermine the reliability of aggregate measures of housing prices, since revisions would have been shown to be unpredictable at the regional level. Since HPI's are constructed using the same repeat-sales methodology at smaller levels of aggregation such as zip codes, revisions would likely be unpredictable there as well. At smaller levels of aggregation, these revisions are quite large. Furthermore, we only attempted to forecast the first revision to the HPI, when in reality the cumulative revisions over time will be even larger. Because of all of this, policymakers would need to be careful when using HPI's -- particularly recent values. 
+
+It could be useful for future research to be conducted as to explain why HPI revisions might be predictable and how to improve them without having to  run  this forecast. Much of this could be done by the people in charge of releasing and maintaining the various versions of the HPI, such as the FHFA, CoreLogic, and Case-Shiller.
+
+\section{Conclusion}
+
+In this paper, we developed a model to forecast revisions to housing price indexes and tested it against the data. We believe that there is some predictive content in this model, and that it should be used by index developers and by policymakers in the future to improve the reliability of aggregate house price estimates. If there is interest in the model, we will need to develop an improved Bayesian version to allow for better theoretical underpinnings and  unambiguous prediction standard errors. In the meantime, we hope to be able to make people aware of these revisions as well as the fact that we can do something about them.
+
+% Remove or comment out the next two lines if you are not using bibtex.
+\bibliographystyle{aea}
+\newpage
+\bibliography{thesisBib}
+
+\end{document}
+
